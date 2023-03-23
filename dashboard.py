@@ -38,6 +38,14 @@ highlight = alt.selection_single(on='mouseover', fields=['id'], empty='none')
 
 selector = alt.selection_single(fields=['county'])
 
+#Text
+text = alt.Chart({'values':[{}]}).mark_text(
+    align="left", baseline="top",
+    size=20
+).encode(
+    text=alt.value(['Stakeholder: A Restaurant Owner,', 'Wanting to Find Out How COVID', 'Impacts Restuarant Business and', 'Explore Historical COVID Trends', 'by County'])
+)
+
 #Geographic Map
 plot = alt.Chart(counties).mark_geoshape().encode(
     color=alt.condition(highlight, alt.value('gold'), 'covid_cases_per_100k:Q'),
@@ -118,5 +126,6 @@ personal = alt.layer(bar,chart).properties(
     title="Covid Infection Rates for Selected County and Percent Change of In-Restaurant Diners for U.S."
 ).resolve_scale(y='independent').interactive()
 dashboard = alt.vconcat(geog_map, personal)
+dashboard = alt.concat(text, dashboard)
 
 dashboard.save("dashboard.html")
