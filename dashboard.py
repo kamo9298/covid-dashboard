@@ -36,7 +36,7 @@ states = alt.topo_feature(data.us_10m.url, 'states')
 
 highlight = alt.selection_single(on='mouseover', fields=['id'], empty='none')
 
-selector = alt.selection_single(fields=['county'])
+selector = alt.selection_single(fields=['county'], init = {'county': 'Boulder County'})
 
 #Text
 text = alt.Chart({'values':[{}]}).mark_text(
