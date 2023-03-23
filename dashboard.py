@@ -69,7 +69,7 @@ outline = alt.Chart(states).mark_geoshape(stroke='blue', fillOpacity=0).project(
 #county_selection = alt.selection_single(fields=['county'], bind=county_dropdown)
 
 scale_last = deliv_df['Date'][len(deliv_df)-1]
-scale_first = deliv_df['Date'][len(deliv_df)-300]
+scale_first = deliv_df['Date'][len(deliv_df)-90]
 
 bar = alt.Chart(cov_hist_df).mark_bar().encode(
     x=alt.X('date', title="Date", scale=alt.Scale(
@@ -81,14 +81,14 @@ bar = alt.Chart(cov_hist_df).mark_bar().encode(
 ).transform_filter(
     selector
 )
-
+deliv_df['rolling_mean'] = deliv_df['Percent Change'].rolling(7).mean()
 chart = alt.Chart(deliv_df).mark_line().encode(
     alt.X('Date',
           scale=alt.Scale(
             domain=(scale_first, scale_last),
             clamp=True
         )),
-    y='Percent Change',
+    y=alt.Y('rolling_mean', title = "7-day Rolling Mean of Percent Change of In-Restaurant Diners"),
     color = alt.value("#FF8400")
 )
 
@@ -112,7 +112,11 @@ line = alt.Chart(cov_hist_df.head(20000)).mark_line(color='yellow').transform_wi
 
 
 geog_map = alt.layer(plot,outline)
-personal = alt.layer(bar,chart).properties(width=600).resolve_scale(y='independent').interactive()
+personal = alt.layer(bar,chart).properties(
+    width=800,
+    height=400,
+    title="Covid Infection Rates for Selected County and Percent Change of In-Restaurant Diners for U.S."
+).resolve_scale(y='independent').interactive()
 dashboard = alt.vconcat(geog_map, personal)
 
 dashboard.save("dashboard.html")
