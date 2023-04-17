@@ -28,8 +28,13 @@ cov_hist_df = cov_hist_df.merge(county_and_fips, on='county_fips', how="left")
 
 cov_hist_df.loc[cov_hist_df['county'] == 'Hays County']
 
+#Fixing the slow
+uni_df = uni_df.drop(columns=["state", "county_population", "health_service_area_number", "health_service_area", "health_service_area_population","covid_inpatient_bed_utilization","covid_hospital_admissions_per_100k", "covid-19_community_level","date_updated"], axis=1)
+uni_df = uni_df.replace(',','', regex=True)
+uni_df = uni_df.astype({'county_fips':'uint64'})
+
 #Kaleb's Attempt
-cov_src = pd.read_csv("universal-map-covid.csv")
+cov_src = uni_df
 
 counties = alt.topo_feature(data.us_10m.url, 'counties')
 states = alt.topo_feature(data.us_10m.url, 'states')
