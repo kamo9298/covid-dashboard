@@ -10,16 +10,16 @@ alt.renderers.enable('altair_viewer')
 #Data Loading
 uni_df = pd.read_csv("universal-map-covid.csv")
 deliv_df = pd.read_csv('daily_change_in_seated_restaurant_diners.csv', parse_dates=['Date'])
-cov_hist_df = pd.read_csv("daily-covid-hist.csv", parse_dates=['date'])
+cov_hist_df = pd.read_csv("clean_daily-covid-hist.csv", parse_dates=['date'])
 
 ################# RUNNING THIS CODE BLOCK MORE THAN ONCE WILL BREAK IF YOU DON'T RUN THE ON ABOVE IT FIRST ######################################
 
 #Cleaning Step for Historical
-oldest_df = cov_hist_df.replace('suppressed', 0)
-older_df = oldest_df.replace(',','', regex=True)
-older_df["cases_per_100K_7_day_count_change"] = pd.to_numeric(older_df["cases_per_100K_7_day_count_change"])
-cov_hist_df["cases_per_100K_7_day_count_change"] = older_df["cases_per_100K_7_day_count_change"].values
-cov_hist_df.rename(columns = {'fips_code':'county_fips'}, inplace = True)
+# oldest_df = cov_hist_df.replace('suppressed', 0)
+# older_df = oldest_df.replace(',','', regex=True)
+# older_df["cases_per_100K_7_day_count_change"] = pd.to_numeric(older_df["cases_per_100K_7_day_count_change"])
+# cov_hist_df["cases_per_100K_7_day_count_change"] = older_df["cases_per_100K_7_day_count_change"].values
+# cov_hist_df.rename(columns = {'fips_code':'county_fips'}, inplace = True)
 
 #Fixing Hist_DF
 county_and_fips = uni_df[["county_fips","county"]].copy()
@@ -48,8 +48,8 @@ text = alt.Chart({'values':[{}]}).mark_text(
 
 #Geographic Map
 plot = alt.Chart(counties).mark_geoshape().encode(
-    color=alt.condition(highlight, alt.value('gold'), 'covid_cases_per_100k:Q'),
-    tooltip=['county:N', alt.Tooltip('covid_cases_per_100k:Q', title="covid rate per 100k")]
+    color=alt.condition(highlight, alt.value('gold'), 'covid_cases_per_100k:Q', title='Covid Cases per 100k'),
+    tooltip=['county:N', alt.Tooltip('covid_cases_per_100k:Q', title="Covid Cases per 100k")]
 ).transform_lookup(
     lookup='id',
     from_=alt.LookupData(cov_src, key='county_fips', fields=['county','covid_cases_per_100k'])
@@ -79,16 +79,25 @@ outline = alt.Chart(states).mark_geoshape(stroke='blue', fillOpacity=0).project(
 scale_last = deliv_df['Date'][len(deliv_df)-1]
 scale_first = deliv_df['Date'][len(deliv_df)-90]
 
-bar = alt.Chart(cov_hist_df).mark_bar().encode(
+bar = alt.Chart(cov_hist_df).mark_line().encode(
     x=alt.X('date', title="Date", scale=alt.Scale(
             domain=(scale_first, scale_last),
             clamp=True
         )),
-    y=alt.Y('cases_per_100K_7_day_count_change:Q', title="Cases Per 100k"),
+    y=alt.Y('percent_change_7_day_rolling_mean:Q', title=""),
     color = alt.value("#2916D5")
 ).transform_filter(
     selector
 )
+
+bar_legend = alt.Chart({'values':[{}]}).mark_text(
+    align="left", baseline="top",
+    size=15,
+    color = 'blue'
+).encode(
+    text=alt.value(['Covid Cases per 100k'])
+)
+
 deliv_df['rolling_mean'] = deliv_df['Percent Change'].rolling(7).mean()
 chart = alt.Chart(deliv_df).mark_line().encode(
     alt.X('Date',
@@ -96,10 +105,19 @@ chart = alt.Chart(deliv_df).mark_line().encode(
             domain=(scale_first, scale_last),
             clamp=True
         )),
-    y=alt.Y('rolling_mean', title = "7-day Rolling Mean of Percent Change of In-Restaurant Diners"),
+    y=alt.Y('rolling_mean', title = "7-day Rolling Mean of Percent Change"),
     color = alt.value("#FF8400")
 )
 
+chart_legend = alt.Chart({'values':[{}]}).mark_text(
+    align="left", baseline="top",
+    size=15,
+    color = 'darkorange'
+).encode(
+    text=alt.value(['In-Person Restaurant Diners'])
+)
+
+legend = alt.vconcat(bar_legend, chart_legend)
 
 #Rolling Mean Line to compensate for missing data
 #TODO FIX
@@ -117,14 +135,20 @@ line = alt.Chart(cov_hist_df.head(20000)).mark_line(color='yellow').transform_wi
     county_selection
 )
 '''
-
-
 geog_map = alt.layer(plot,outline)
 personal = alt.layer(bar,chart).properties(
     width=800,
     height=400,
-    title="Covid Infection Rates for Selected County and Percent Change of In-Restaurant Diners for U.S."
-).resolve_scale(y='independent').interactive()
+    title="7-Day Rolling Mean of Percent Change in Covid Infection Rates for Selected County and of In-Restaurant Diners for U.S."
+).interactive(
+    bind_x=alt.binding_range(
+        min=0,
+        max=800,
+        step=1
+    ),
+    bind_y=False,
+) | legend
+
 dashboard = alt.vconcat(geog_map, personal)
 dashboard = alt.concat(text, dashboard)
 
