@@ -155,6 +155,6 @@ personal = alt.layer(bar,chart).properties(
 ) | legend
 
 dashboard = alt.vconcat(geog_map, personal)
-dashboard = alt.concat(text, dashboard).configure_view(strokeWidth=0)
+dashboard = alt.vconcat(text, dashboard).configure_view(strokeWidth=0)
 
 dashboard.save("dashboard.html")
