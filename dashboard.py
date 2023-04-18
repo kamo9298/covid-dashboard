@@ -100,7 +100,7 @@ bar_legend = alt.Chart({'values':[{}]}).mark_text(
     size=15,
     color = 'blue'
 ).encode(
-    text=alt.value(['Covid Cases per 100k'])
+    text=alt.value(['▣ Covid Cases per 100k'])
 )
 
 deliv_df['rolling_mean'] = deliv_df['Percent Change'].rolling(7).mean()
@@ -119,7 +119,7 @@ chart_legend = alt.Chart({'values':[{}]}).mark_text(
     size=15,
     color = 'darkorange'
 ).encode(
-    text=alt.value(['In-Person Restaurant Diners'])
+    text=alt.value(['▣ In-Person Restaurant Diners'])
 )
 
 legend = alt.vconcat(bar_legend, chart_legend)
@@ -155,6 +155,6 @@ personal = alt.layer(bar,chart).properties(
 ) | legend
 
 dashboard = alt.vconcat(geog_map, personal)
-dashboard = alt.concat(text, dashboard)
+dashboard = alt.concat(text, dashboard).configure_view(strokeWidth=0)
 
 dashboard.save("dashboard.html")
